@@ -5,104 +5,103 @@ import seaborn as sns
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.manifold import TSNE
+from pathlib import Path
 
 st.set_page_config(
     page_title="Fashion MNIST t-SNE",
     layout="wide"
 )
 
-with open("style.css") as f:
-    st.markdown(
-        f"<style>{f.read()}</style>",
-        unsafe_allow_html=True
-    )
-
-from pathlib import Path
+try:
+    with open("style.css") as f:
+        st.markdown(
+            f"<style>{f.read()}</style>",
+            unsafe_allow_html=True
+        )
+except:
+    pass
 
 BASE_DIR = Path(__file__).parent
 
 df = pd.read_csv(
     BASE_DIR / "fashion_tsne_output.csv"
 )
-st.sidebar.title(
-    "Navigation"
-)
+
+st.sidebar.title("Navigation")
 
 page = st.sidebar.radio(
     "Select Page",
     [
         "Dashboard",
-        "EDA",
+        "Dataset Info",
         "t-SNE Visualization"
     ]
 )
 
 if page == "Dashboard":
 
-    st.title(
-        "Fashion MNIST t-SNE Dashboard"
-    )
+    st.title("Fashion MNIST t-SNE Dashboard")
 
-    col1,col2,col3 = st.columns(3)
+    col1, col2, col3 = st.columns(3)
 
     col1.metric(
-        "Records",
+        "Rows",
         df.shape[0]
     )
 
     col2.metric(
-        "Features",
+        "Columns",
         df.shape[1]
     )
 
     col3.metric(
-        "Classes",
-        df["label"].nunique()
+        "Missing Values",
+        df.isnull().sum().sum()
     )
 
-    st.dataframe(
-        df.head()
-    )
+    st.subheader("Dataset Preview")
 
-elif page == "EDA":
+    st.dataframe(df.head())
 
-    st.title(
-        "Fashion Category Distribution"
-    )
+elif page == "Dataset Info":
 
-    fig, ax = plt.subplots(
-        figsize=(10,6)
-    )
+    st.title("Dataset Information")
 
-    sns.countplot(
-        x="label",
-        data=df,
-        ax=ax
-    )
+    st.subheader("Shape")
+    st.write(df.shape)
 
-    st.pyplot(fig)
+    st.subheader("Columns")
+    st.write(df.columns.tolist())
+
+    st.subheader("Summary Statistics")
+    st.dataframe(df.describe())
 
 elif page == "t-SNE Visualization":
 
-    st.title(
-        "t-SNE Projection"
+    st.title("t-SNE Visualization")
+
+    sample_size = st.slider(
+        "Select Sample Size",
+        500,
+        min(5000, len(df)),
+        2000,
+        step=500
     )
 
     sample_df = df.sample(
-        3000,
+        sample_size,
         random_state=42
     )
 
-    X = sample_df.drop(
-        "label",
-        axis=1
+    st.info(
+        "Computing t-SNE. This may take a few seconds..."
     )
-
-    y = sample_df["label"]
 
     scaler = StandardScaler()
 
-    X_scaled = scaler.fit_transform(X)
+    X_scaled = scaler.fit_transform(
+        sample_df
+    )
 
     tsne = TSNE(
         n_components=2,
@@ -122,19 +121,25 @@ elif page == "t-SNE Visualization":
         ]
     )
 
-    tsne_df["Label"] = y
-
     fig, ax = plt.subplots(
-        figsize=(12,8)
+        figsize=(12, 8)
     )
 
     sns.scatterplot(
         data=tsne_df,
         x="TSNE1",
         y="TSNE2",
-        hue="Label",
-        palette="tab10",
         ax=ax
     )
 
+    ax.set_title(
+        "Fashion MNIST t-SNE Projection"
+    )
+
     st.pyplot(fig)
+
+    st.subheader("t-SNE Data")
+
+    st.dataframe(
+        tsne_df.head()
+    )
