@@ -83,8 +83,8 @@ elif page == "t-SNE Visualization":
     sample_size = st.slider(
         "Select Sample Size",
         500,
-        min(5000, len(df)),
-        2000,
+        min(3000, len(df)),
+        1000,
         step=500
     )
 
@@ -93,15 +93,22 @@ elif page == "t-SNE Visualization":
         random_state=42
     )
 
-    st.info(
-        "Computing t-SNE. This may take a few seconds..."
+    X = sample_df.copy()
+
+    X = X.select_dtypes(include=["number"])
+
+    X = X.fillna(0)
+
+    X = X.replace(
+        [float("inf"), float("-inf")],
+        0
     )
+
+    st.write("Shape:", X.shape)
 
     scaler = StandardScaler()
 
-    X_scaled = scaler.fit_transform(
-        sample_df
-    )
+    X_scaled = scaler.fit_transform(X)
 
     tsne = TSNE(
         n_components=2,
@@ -109,16 +116,11 @@ elif page == "t-SNE Visualization":
         random_state=42
     )
 
-    X_tsne = tsne.fit_transform(
-        X_scaled
-    )
+    X_tsne = tsne.fit_transform(X_scaled)
 
     tsne_df = pd.DataFrame(
         X_tsne,
-        columns=[
-            "TSNE1",
-            "TSNE2"
-        ]
+        columns=["TSNE1", "TSNE2"]
     )
 
     fig, ax = plt.subplots(
@@ -132,14 +134,4 @@ elif page == "t-SNE Visualization":
         ax=ax
     )
 
-    ax.set_title(
-        "Fashion MNIST t-SNE Projection"
-    )
-
     st.pyplot(fig)
-
-    st.subheader("t-SNE Data")
-
-    st.dataframe(
-        tsne_df.head()
-    )
