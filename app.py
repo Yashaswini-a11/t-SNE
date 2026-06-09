@@ -17,10 +17,13 @@ with open("style.css") as f:
         unsafe_allow_html=True
     )
 
-df = pd.read_csv(
-    r"C:\Users\yasha\Downloads\fashion-mnist_train.csv\fashion-mnist_train.csv"
-)
+from pathlib import Path
 
+BASE_DIR = Path(__file__).parent
+
+df = pd.read_csv(
+    BASE_DIR / "fashion_tsne_output.csv"
+)
 st.sidebar.title(
     "Navigation"
 )
